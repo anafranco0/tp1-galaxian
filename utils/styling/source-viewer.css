@@ -1,0 +1,117 @@
+/* Styles for the source viewer (injected once) */
+.sv-container {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 50%;
+    max-width: 100%;
+    background: #e6eef3;
+    color: #0f1115;
+    font-family: Menlo, Monaco, 'Courier New', monospace;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+
+}
+@media (max-width: 1000px) {
+    .sv-container {
+        width: 100%;
+    }
+}
+
+.sv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.sv-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+}
+
+.sv-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #252b32;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+
+    &:hover {
+        background: rgb(245 245 245);
+    }
+}
+
+.sv-tab.active {
+    background: rgb(230 230 230);
+    border-color: rgb(0 0 0 / 10%);
+    color: #000;
+}
+
+.sv-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sv-close {
+    background: transparent;
+    border: none;
+    color: #583232;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+
+/* Animation: slide horizontally using transform (GPU friendly). */
+.sv-container {
+    transform: translateX(0);
+    transition: transform 240ms cubic-bezier(.2,.9,.2,1), opacity 180ms ease;
+    will-change: transform, opacity;
+}
+.sv-container.sv-closed {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+.sv-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 12px;
+}
+
+.sv-pre {
+    margin: 0;
+    white-space: pre;
+    tab-size: 2;
+    font-size: 13px;
+}
+
+/* Opener button shown when the viewer is dismissed */
+.sv-opener {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #121216;
+    color: #e6eef3;
+    border: 1px solid rgba(255,255,255,0.04);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 10001;
+}
+
+.sv-opener:active { transform: translateY(1px); }
+

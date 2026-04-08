@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TP1</title>
+  <link rel="stylesheet" href="../utils/styling/example.css">
+  <link rel="stylesheet" href="../hello-resizable/resizable-canvas.css">
+  <script src="../utils/code/errors.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111;
+    }
+
+    canvas {
+      aspect-ratio: 1 / 1;   /* mantém quadrado */
+      width: 95vmin;         /* aumenta para 95% do menor lado da tela */
+      height: auto;
+      border: 2px solid white;
+    }
+
+
+
+
+  </style>
+
+
+</head>
+<body>
+    <canvas class="glCanvas" width="500" height="500"></canvas> 
+
+    
+
+    <script type="shader/vertex">
+    #version 300 es
+
+    in vec2 position;
+    // ℹ️ novo: matriz de projeção ortográfica
+    uniform mat4 projection;
+
+    void main() {
+      // ℹ️ multiplica coords. pela matriz de modelo e projeção
+      gl_Position = projection * vec4(position, 0.0 , 1.0);
+    }
+  </script>
+  <script type="shader/fragment">
+    #version 300 es
+
+    precision mediump float;
+    uniform vec4 u_color; // Cor definida pelo JS
+
+    out vec4 outColor;
+
+    void main() {
+      outColor = u_color;
+    }
+
+  </script>
+  <script type="module">
+    import { setupWebGL, initialize, render } from './main.js'
+    import { ortho } from '../utils/code/math-utils.js'
+
+    const gl = setupWebGL()
+    initialize(gl)
+    function loop() {
+        render(gl)
+        requestAnimationFrame(loop)
+    }
+    loop()
+
+  </script>
+</body>
+</html>
+
+<!-- inserido apenas para mostrar o código fonte :P -->
+<script type="module">
+  import createSourceViewer from '../utils/code/source-viewer.js';
+
+  createSourceViewer([
+    { language: 'javascript', name: 'main.js', path: './main.js' },
+    { language: 'glsl', name: 'vertex-shader', code: document.querySelector('[type="shader/vertex"]').textContent },
+    { language: 'glsl', name: 'fragment-shader', code: document.querySelector('[type="shader/fragment"]').textContent },
+    { language: 'javascript', name: 'gl-utils.js', path: '../utils/code/gl-utils.js' },
+  ]);
+</script>
