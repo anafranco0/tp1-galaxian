@@ -12,19 +12,6 @@ function resizeCanvasToDisplaySize(canvas) {
   return true;
 }
 
-const canvas = document.getElementById("glCanvas");
-const gl = canvas.getContext("webgl2");
-
-// Ajusta logo no início
-resizeCanvasToDisplaySize(canvas);
-gl.viewport(0, 0, canvas.width, canvas.height);
-
-// Atualiza automaticamente quando a janela muda de tamanho
-window.addEventListener("resize", () => {
-  resizeCanvasToDisplaySize(canvas);
-  gl.viewport(0, 0, canvas.width, canvas.height);
-});
-
 
 // ℹ️ objeto global para armazenar os objetos da cena
 // agora é necessário para armazenarmos os VAOs de cada objeto,
@@ -66,13 +53,24 @@ window.addEventListener('keydown', (event) => {
 
 export function setupWebGL() {
     // inicializa o WebGL2
-    const canvas = document.querySelector('.example-canvas');
+    const canvas = document.querySelector('.glCanvas');
     const gl = canvas.getContext('webgl2');
     
     if (!gl) {
       console.error('WebGL2 não está disponível');
       throw new Error('WebGL2 não suportado');
     }
+
+      // Ajusta logo no início
+    resizeCanvasToDisplaySize(canvas);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    // Atualiza automaticamente quando a janela muda de tamanho
+    window.addEventListener("resize", () => {
+        resizeCanvasToDisplaySize(canvas);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    });
+
 
     return gl
 }
