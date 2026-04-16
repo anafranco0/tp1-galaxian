@@ -1,6 +1,7 @@
 import { createProgram, createShader } from '../utils/code/gl-utils.js';
 import { ortho, translate } from '../utils/code/math-utils.js';
 
+
 function resizeCanvasToDisplaySize(canvas) {
   const displayWidth  = canvas.clientWidth;
   const displayHeight = canvas.clientHeight;
@@ -19,36 +20,6 @@ function resizeCanvasToDisplaySize(canvas) {
 const sceneObjects = {
     // inicialmente vazio, mas depois terá os VAOs do quadrado e triângulo
 }
-
-let numLados = 3;
-window.addEventListener('keydown', (event) => {
-
-    // Aumentar
-    if (event.key === '+' || event.code === 'Equal' && event.shiftKey) {
-        if (numLados < 100) {
-            numLados++;
-            console.log("Aumentando nº de lados:", numLados);
-        } else {
-            console.log("Não é possível aumentar mais que 100 lados!");
-            alert("⚠️ Aviso: você tentou ultrapassar o limite máximo permitido. Não é possível aumentar mais que 100 lados!");
-            numLados = 100;
-        }       
-        
-    }
-    // Diminuir
-    if (event.key === '-' || event.code === 'Minus') {
-        if (numLados > 3) {
-            numLados--;
-            console.log("Diminuindo nº de lados:", numLados);
-        } else {
-            console.log("Não é possível diminuir mais que 3 lados!");
-             alert("⚠️ Aviso: você tentou ultrapassar o limite mínimo permitido. Não é possível diminuir mais que 3 lados!");
-            numLados = 3;
-        }
-        
-    }
-});
-
 
 
 export function setupWebGL() {
@@ -89,24 +60,16 @@ export function initialize(gl) {
     );
     gl.useProgram(program);
     gl.program = program
+
+    //Habilita o blending para lidar com transparências da textura (canal alpha)
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+    const texUniformLocation = gl.getUniformLocation(program, "u_texture");
+    gl.uniform1i(texUniformLocation, 0);
     
-    // -----------------------------
-    // CRIAÇÃO DO VAO + VBO
-    // -----------------------------
-
-    
-    // ℹ️ criando o VAO + VBO para ser preenchido dinâmicamente
-    sceneObjects.poliVAO = gl.createVertexArray()
-    gl.bindVertexArray(sceneObjects.poliVAO)
-
-    sceneObjects.poliVBO = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, sceneObjects.poliVBO)
-
-    gl.bufferData(gl.ARRAY_BUFFER, 100*2*4, gl.DYNAMIC_DRAW) //Alocando um buffer que permita fazer desenhos dinâmicos até 100 lados 
-
-    const positionAttributeLocation = gl.getAttribLocation(program, 'position')
-    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0)
-    gl.enableVertexAttribArray(positionAttributeLocation)
+    const naveTexture = loadTextura(gl, "naveTeste2.png");
+    sceneObjects.nave = new Sprite(gl, program, "nave",naveTexture, 40, 0, 20 , 20);
    
     
     // encontra a localização da variável 'projection' do shader e 
@@ -130,30 +93,107 @@ export function render(gl) {
     // apaga a tela
     gl.clear(gl.COLOR_BUFFER_BIT)
 
-    //Calculando a posição dos novos vértices
-    const novosVertices =  geraPoligono(50, 50, 30);
-
-    //Atualizando dinâmicamente os vértices do VBO
-    gl.bindBuffer(gl.ARRAY_BUFFER, sceneObjects.poliVBO);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, novosVertices);
-
-    // ℹ️ ativa o VAO do polígono e desenha ele
-    gl.uniform4f(gl.colorLoc, 0, 0, 1, 1);
-    gl.bindVertexArray(sceneObjects.poliVAO)
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, numLados)
+    if (sceneObjects.nave) {
+      sceneObjects.nave.desenha();
+    }
+    
 
   
 }
 
-//Função que faz a conta do posicionamento dos vértices
-function geraPoligono(cx, cy, raio) {
-    const verts = []
-    for (let i = 0; i < numLados; i++) {
-        const ang = i * (2*Math.PI)/numLados;
-        verts.push(cx + raio * Math.cos(ang));
-        verts.push(cy + raio * Math.sin(ang));
-    }
-    return new Float32Array(verts);
+document.addEventListener("keydown", (event) => {
+  console.log("Tecla pressionada:", event.key);
+  if(event.key === "ArrowLeft"){
+    sceneObjects.nave.x -= 2;
+    sceneObjects.nave.vao = sceneObjects.nave.criaVAO()
+  }
+  if(event.key === "ArrowRight"){
+    sceneObjects.nave.x += 2;
+    sceneObjects.nave.vao = sceneObjects.nave.criaVAO()
+  }
+});
 
+document.addEventListener("keyup", (event) => {
+  console.log("Tecla liberada:", event.key);
+});
+
+
+class Sprite {
+  constructor(gl, program, nome, textura, x, y, width, height) {
+    this.gl = gl;
+    this.program = program;
+    this.nome = nome;  
+
+    this.textura = textura;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+
+    this.vao = this.criaVAO();
+  }
+
+  criaVAO(){
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+
+    const vertices = new Float32Array([
+      // posição X,Y              // texCoord U,V
+      this.x, this.y,               0.0, 1.0,
+      this.x + this.width, this.y,  1.0, 1.0,
+      this.x + this.width, this.y + this.height, 1.0, 0.0,
+      this.x, this.y + this.height, 0.0, 0.0
+    ]);
+
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+    const positionAttributeLocation = gl.getAttribLocation(this.program, 'position');
+    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 16, 0);
+    gl.enableVertexAttribArray(positionAttributeLocation);
+
+    const texLoc = gl.getAttribLocation(this.program, 'texCoord');
+    gl.vertexAttribPointer(texLoc, 2, gl.FLOAT, false, 16, 8);
+    gl.enableVertexAttribArray(texLoc);
+
+    this.vao = vao;
+    this.vbo = vbo;
+
+    return this.vao;
+  }
+
+  desenha(){
+    const gl = this.gl;
+
+    gl.bindVertexArray(this.vao);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.textura);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+  }
 }
 
+function loadTextura(gl, url){
+  const texture = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, texture)
+
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
+
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+
+  const image = new Image();
+  image.onload = ()  => {
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
+     gl.generateMipmap(gl.TEXTURE_2D)
+  }
+  image.src = url;
+
+  return texture;
+
+}

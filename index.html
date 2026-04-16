@@ -41,24 +41,29 @@
     #version 300 es
 
     in vec2 position;
+    in vec2 texCoord;
     // ℹ️ novo: matriz de projeção ortográfica
     uniform mat4 projection;
+
+    out vec2 v_texCoord;
 
     void main() {
       // ℹ️ multiplica coords. pela matriz de modelo e projeção
       gl_Position = projection * vec4(position, 0.0 , 1.0);
+      v_texCoord = texCoord;
     }
   </script>
   <script type="shader/fragment">
     #version 300 es
 
     precision mediump float;
-    uniform vec4 u_color; // Cor definida pelo JS
+    uniform sampler2D u_texture;
+    in vec2 v_texCoord;
 
     out vec4 outColor;
 
     void main() {
-      outColor = u_color;
+      outColor = texture(u_texture, v_texCoord);
     }
 
   </script>
