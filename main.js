@@ -1,4 +1,4 @@
-import { createProgram, createShader } from '../utils/code/gl-utils.js';
+import { createProgram, createShader } from './utils/code/gl-utils.js';
 import { ortho, translate } from './utils/code/math-utils.js';
 
 // ---- Ajustando tamanho do canvas para ficar maior sem distorção ----
